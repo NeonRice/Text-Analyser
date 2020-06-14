@@ -35,6 +35,27 @@ void Output(std::ostream &s, std::map<KTy, Ty> map, std::set<X> links)
     }
 }
 
+// Function to get user input in Y/N format
+bool yesOrNo(const std::string &instruction)
+{
+    std::cout << instruction << std::endl;
+    char choice;
+    while (1)
+    {
+        std::cin >> choice;
+        if (toupper(choice) == 'Y')
+            return true;
+        else if (toupper(choice) == 'N')
+            return false;
+        else
+        {
+            std::cin.clear();
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            std::cout << "Wrong input! Try again!" << std::endl;
+        }
+    }
+}
+
 // Function that returns a set of URL's from a given map.
 template <class KTy, class Ty>
 std::set<std::string> getLinksFromMap(std::map<KTy, Ty> &map)
@@ -164,11 +185,15 @@ int main(void)
     try
     {
         std::set<std::string> links;
-        auto map = readMapFromFile(isUrl, links);
-        // Print the words map.
-        //Output(std::cout, map, links);
-        std::ofstream s("output.txt");
-        Output(s, map, links);
+        auto map = readMapFromFile(isUrl, links); // By default input filename is input.txt
+
+        if (yesOrNo("Output to file? (Y / N):"))
+        {
+            std::ofstream s("output.txt");
+            Output(s, map, links);
+        }
+        else
+            Output(std::cout, map, links);
 
         return EXIT_SUCCESS;
     }
