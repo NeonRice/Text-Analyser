@@ -10,18 +10,21 @@
 #include <algorithm>
 
 // Function to output our results from a map and a (possibly empty) links set.
-template <class KTy, class Ty, class X>
-void Output(std::ostream &s, std::map<KTy, Ty> map, std::set<X> links)
+template <class KTy, class Ty, class X, class MapFunction>
+void Output(
+    std::ostream &s, std::map<KTy, Ty> map, std::set<X> links, MapFunction mapBy)
 {
     if (s.bad()) // Failbit
         throw "Bad ostream given.";
-
+    
     typedef typename std::map<KTy, Ty>::iterator iterator;
     s << std::left << std::setw(55) << "Word" << std::setw(14) << "Occurances" // Header of output
       << "Lines"
       << "\n\n";
     for (iterator p = map.begin(); p != map.end(); p++) // Printing "Lines" of occurance
     {
+        if (!mapBy(p))
+            continue;
         s << std::left << std::setw(55) << p->first << std::setw(14) << p->second.first;
         for (auto linePos : p->second.second)
             s << linePos << " ";
@@ -56,39 +59,17 @@ bool yesOrNo(const std::string &instruction)
     }
 }
 
-// Function that returns a set of URL's from a given map.
-template <class KTy, class Ty>
-std::set<std::string> getLinksFromMap(std::map<KTy, Ty> &map)
-{
-    std::set<std::string> validLinks{"https://", "http://", "www."}, links;
-    for (std::string linkPrefix : validLinks)
-    {
-        for (auto &[key, value] : map)
-        {
-            std::string prefix = key.substr(0, linkPrefix.size());
-            if (linkPrefix == prefix)
-            {
-                std::string link = key;
-                if (linkPrefix != "www.")
-                    link.insert(link.begin() + linkPrefix.size() - 2, ':');
-                links.insert(link);
-            }
-        }
-    }
-    return links;
-}
-
 bool isUrl(const std::string &URL)
 {
-    std::set<std::string> validLinks{
+    const std::set<std::string> validLinks{
         "https://",
         "http://",
         "www.",
     },
         links;
-    for (std::string linkPrefix : validLinks)
+    for (const std::string &linkPrefix : validLinks)
     {
-        std::string prefix = URL.substr(0, linkPrefix.size());
+        const std::string &prefix = URL.substr(0, linkPrefix.size());
         if (linkPrefix == prefix)
         {
             if (isalpha(URL.back()))
@@ -103,7 +84,7 @@ std::string removeNonUrl(const std::string &str)
     std::string modifiedStr = str;
     for (auto i = modifiedStr.begin(); i != modifiedStr.end(); ++i)
     {
-        if(ispunct(*i) && *i != '.' && *i != '/' && *i != ':')
+        if (ispunct(*i) && *i != '.' && *i != '/' && *i != ':')
         {
             modifiedStr.erase(std::remove(std::begin(modifiedStr), std::end(modifiedStr), *i));
             --i;
@@ -117,8 +98,7 @@ std::string removeNotAlNum(const std::string &str)
     std::string modifiedStr = str;
     for (auto i = modifiedStr.begin(); i != modifiedStr.end(); ++i)
     {
-        if(!isalnum
-        (*i))
+        if (!isalnum(*i))
         {
             modifiedStr.erase(std::remove(std::begin(modifiedStr), std::end(modifiedStr), *i));
             --i;
@@ -152,9 +132,9 @@ auto readMapFromFile(BoolCallbackFunction boolFunction, std::set<std::string> &b
                 {
                     word = removeNonUrl(word);
                     boolSorted.insert(word);
-                    if (removeSpecialFromMap)   // If we don't need the special case in our map
-                        continue; // We're done processing the special case here... Move on
-                }   
+                    if (removeSpecialFromMap) // If we don't need the special case in our map
+                        continue;             // We're done processing the special case here... Move on
+                }
 
                 word = removeNotAlNum(word);
 
@@ -190,10 +170,10 @@ int main(void)
         if (yesOrNo("Output to file? (Y / N):"))
         {
             std::ofstream s("output.txt");
-            Output(s, map, links);
+            Output(s, map, links, [](auto p) { return p->second.first > 1; });
         }
         else
-            Output(std::cout, map, links);
+            Output(std::cout, map, links, [](auto p) { return p->second.first > 1; });
 
         return EXIT_SUCCESS;
     }
