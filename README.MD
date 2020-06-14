@@ -21,7 +21,7 @@ For example:
 | this      | 3    |   1 5 8|
 | zebra| 2      |    6 7 |
 
-Links are stored in *std::set*
+Links are stored in *[std::set](https://en.cppreference.com/w/cpp/utility/set)*
 
 ## Instructions
 1. Compile the program with your preferred compiler. 
